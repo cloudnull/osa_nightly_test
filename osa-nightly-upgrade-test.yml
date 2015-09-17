@@ -1,0 +1,164 @@
+- name: Create an OSA Server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  user: root
+  tasks:
+    - name: Ensure no upgrade instance is present
+      nova_compute:
+        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        state: absent
+        login_username: "{{ login_username }}"
+        login_password: "{{ login_password }}"
+        login_tenant_name: "{{ login_tenant_name }}"
+        auth_url: "{{ os_auth_url }}"
+        region_name: "{{ region_name | capitalize }}"
+        image_name: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
+        flavor_ram: 8192
+        flavor_include: Performance
+        key_name: "{{ os_keyname }}"
+      with_items:
+        - Nightly-Test
+      tags:
+        - cleanup-server
+    - name: launch an instance
+      nova_compute:
+        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        state: present
+        login_username: "{{ login_username }}"
+        login_password: "{{ login_password }}"
+        login_tenant_name: "{{ login_tenant_name }}"
+        auth_url: "{{ os_auth_url }}"
+        region_name: "{{ region_name | capitalize }}"
+        image_name: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
+        flavor_ram: 8192
+        flavor_include: Performance
+        key_name: "{{ os_keyname }}"
+      with_items:
+        - Nightly-Test
+      register: nova_hosts
+      tags:
+        - setup-hosts
+        - setup
+    - name: Load inventory
+      add_host:
+        hostname: "{{ item.info.name.split('-')[-1] }}"
+        ansible_ssh_host: "{{ item.info.accessIPv4 }}"
+        ansible_ssh_port: "22"
+        groups: os_nodes
+      with_items: nova_hosts.results
+      tags:
+        - setup-hosts
+        - setup
+    - name: Wait for ssh
+      wait_for:
+        port: 22
+        host: "{{ item.info.accessIPv4 }}"
+        search_regex: OpenSSH
+        delay: 10
+      with_items: nova_hosts.results
+      tags:
+        - setup-hosts
+        - setup
+  vars:
+    login_username: "{{ os_username }}"
+    login_password: "{{ os_password }}"
+    login_tenant_name: "{{ os_tenant_name }}"
+    region_name: "{{ os_region_name }}"
+
+
+- name: Run upgrade
+  hosts: os_nodes
+  gather_facts: false
+  user: root
+  tasks:
+    - name: Install base packages
+      apt:
+        name: "{{ item }}"
+        update_cache: "yes"
+        cache_valid_time: "3600"
+      with_items:
+        - git
+      tags:
+        - install-packages
+    - name: Clone OSA into place
+      git:
+        repo: "{{ osa_repo }}"
+        dest: /opt/openstack-ansible
+        update: yes
+        force: yes
+        version: "{{ osa_branch_source }}"
+      failed_when: false
+      tags:
+        - clone-repo
+    - name: Run the initial deployment
+      command: scripts/gate-check-commit.sh
+      args:
+        chdir: /opt/openstack-ansible
+      environment:
+        RUN_TEMPEST: no
+        DEPLOY_TEMPEST: no
+      tags:
+        - run-install
+    - name: Clone OSA into place
+      git:
+        repo: "{{ osa_repo }}"
+        dest: /opt/openstack-ansible
+        update: yes
+        force: yes
+        version: "{{ osa_branch_target }}"
+      failed_when: false
+      tags:
+        - clone-repo
+    - name: Run the upgrade
+      command: scripts/run-upgrade.sh
+      args:
+        chdir: /opt/openstack-ansible
+      tags:
+        - run-upgrade
+    - name: Install tempest
+      command: openstack-ansible os-tempest-install.yml
+      args:
+        chdir: /opt/openstack-ansible/playbooks
+      tags:
+        - install-tempest
+    - name: Run tempest
+      command: scripts/run-tempest.sh
+      args:
+        chdir: /opt/openstack-ansible
+      register: run_tempest
+      until: run_tempest|success
+      retries: 2
+      delay: 10
+      tags:
+        - run-tempest
+
+
+- name: Destroy an OSA Server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  user: root
+  tasks:
+    - name: destroy an instance
+      nova_compute:
+        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        state: absent
+        login_username: "{{ login_username }}"
+        login_password: "{{ login_password }}"
+        login_tenant_name: "{{ login_tenant_name }}"
+        auth_url: "{{ os_auth_url }}"
+        region_name: "{{ region_name | capitalize }}"
+        image_name: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
+        flavor_ram: 8192
+        flavor_include: Performance
+        key_name: "{{ os_keyname }}"
+      with_items:
+        - Nightly-Test
+      tags:
+        - destroy-server
+  vars:
+    login_username: "{{ os_username }}"
+    login_password: "{{ os_password }}"
+    login_tenant_name: "{{ os_tenant_name }}"
+    region_name: "{{ os_region_name }}"
