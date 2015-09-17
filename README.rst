@@ -24,3 +24,14 @@ Special Options
 osa_instance_name: This is a sting variable and can be used to set the instance name to something special
 
 osa_save_instance: This is a boolean variable. If set the playbook will keep the upgrade instance online once complete.
+
+
+Example command using the "special" options
+
+.. code-block:: bash
+
+    ansible-playbook -i inventory \
+                     -e "osa_save_instance=${SAVE_INSTANCE}" \
+                     -e "osa_instance_name=${INSTANCE_NAME}" \
+                     -e @os-creds.yml \
+                     osa-nightly-upgrade-test.yml
