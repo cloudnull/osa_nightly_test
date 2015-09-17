@@ -92,13 +92,22 @@
       failed_when: false
       tags:
         - clone-repo
-    - name: Run the initial deployment
+    - name: Drop new infra-template for container affinity
+      template:
+        src: "templates/infra_hosts.yml"
+        dest: "/opt/openstack-ansible/etc/rpc_deploy/conf.d/infra_hosts.yml"
+      tags:
+        - infra-template
+    - name: Run the initial build
       command: scripts/gate-check-commit.sh
       args:
         chdir: /opt/openstack-ansible
       environment:
         RUN_TEMPEST: no
+        RUN_PLAYBOOKS: no
         DEPLOY_TEMPEST: no
+        DEPLOY_LOGGING: no
+        DEPLOY_RPC_SUPPORT: no
       tags:
         - run-install
     - name: Clone OSA into place
