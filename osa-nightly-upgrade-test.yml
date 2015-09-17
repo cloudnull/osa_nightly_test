@@ -111,7 +111,8 @@
       tags:
         - clone-repo
     - name: Run the upgrade
-      command: scripts/run-upgrade.sh
+      shell: >
+        echo YES | scripts/run-upgrade.sh
       args:
         chdir: /opt/openstack-ansible
       tags:
