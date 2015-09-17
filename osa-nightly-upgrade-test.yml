@@ -98,6 +98,13 @@
         dest: "/opt/openstack-ansible/etc/rpc_deploy/conf.d/infra_hosts.yml"
       tags:
         - infra-template
+    - name: Force the upgrade to use galera_ignore_cluster_state=true
+      lineinfile:
+        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
+        line: "galera_ignore_cluster_state: true"
+        backup: "true"
+      tags:
+        - set-galera-ignore-cluster-state
     - name: Run the initial build
       command: scripts/gate-check-commit.sh
       args:
@@ -127,13 +134,6 @@
       when: git_refspec != ''
       tags:
         - install-tempest
-    - name: Force the upgrade to use galera_ignore_cluster_state=true
-      lineinfile:
-        dest: "/etc/openstack_deploy/user_variables.yml"
-        line: "galera_ignore_cluster_state: true"
-        backup: "true"
-      tags:
-        - set-galera-ignore-cluster-state
     - name: Run the upgrade
       shell: >
         echo YES | scripts/run-upgrade.sh
