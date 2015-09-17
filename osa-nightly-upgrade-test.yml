@@ -127,6 +127,13 @@
       when: git_refspec != ''
       tags:
         - install-tempest
+    - name: Force the upgrade to use galera_ignore_cluster_state=true
+      lineinfile:
+        dest: "/etc/openstack_deploy/user_variables.yml"
+        line: "galera_ignore_cluster_state: true"
+        backup: "true"
+      tags:
+        - set-galera-ignore-cluster-state
     - name: Run the upgrade
       shell: >
         echo YES | scripts/run-upgrade.sh
