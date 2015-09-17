@@ -120,7 +120,7 @@
       tags:
         - clone-repo
     - name: checkout refspec
-      command: >
+      shell: >
         git fetch {{ osa_repo }} {{ git_refspec }} && git checkout FETCH_HEAD
       args:
         chdir: /opt/openstack-ansible
