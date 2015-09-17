@@ -119,6 +119,14 @@
       failed_when: false
       tags:
         - clone-repo
+    - name: checkout refspec
+      command: >
+        git fetch {{ osa_repo }} {{ git_refspec }} && git checkout FETCH_HEAD
+      args:
+        chdir: /opt/openstack-ansible
+      when: git_refspec != ''
+      tags:
+        - install-tempest
     - name: Run the upgrade
       shell: >
         echo YES | scripts/run-upgrade.sh
@@ -142,6 +150,8 @@
       delay: 10
       tags:
         - run-tempest
+  vars:
+    git_refspec: "{{ osa_refspec | default('') }}"
 
 
 - name: Destroy an OSA test Server

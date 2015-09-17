@@ -17,6 +17,6 @@ os_region_name: IAD
 
 os_auth_url: https://identity.api.rackspacecloud.com/v2.0/
 
-osa_repo: "https://github.com/openstack/openstack-ansible"
+osa_repo: "https://review.openstack.org/openstack/openstack-ansible"
 osa_branch_source: juno
 osa_branch_target: kilo
