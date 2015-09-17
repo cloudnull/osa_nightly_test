@@ -16,3 +16,11 @@ Example command
 .. code-block:: bash
 
   ansible-playbook -i inventory -e @os-creds.yml osa-nightly-upgrade-test.yml
+
+
+Special Options
+^^^^^^^^^^^^^^^
+
+osa_instance_name: This is a sting variable and can be used to set the instance name to something special
+
+osa_save_instance: This is a boolean variable. If set the playbook will keep the upgrade instance online once complete.

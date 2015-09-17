@@ -4,7 +4,7 @@
   gather_facts: false
   user: root
   tasks:
-    - name: Ensure no upgrade instance is present
+    - name: Ensure no upgrade test instance is present
       nova_compute:
         name: "{{ login_username }}-{{ region_name }}-{{ item }}"
         state: absent
@@ -18,10 +18,10 @@
         flavor_include: Performance
         key_name: "{{ os_keyname }}"
       with_items:
-        - Nightly-Test
+        - "{{ instance_name }}"
       tags:
         - cleanup-server
-    - name: launch an instance
+    - name: Launch a test instance
       nova_compute:
         name: "{{ login_username }}-{{ region_name }}-{{ item }}"
         state: present
@@ -35,7 +35,7 @@
         flavor_include: Performance
         key_name: "{{ os_keyname }}"
       with_items:
-        - Nightly-Test
+        - "{{ instance_name }}"
       register: nova_hosts
       tags:
         - setup-hosts
@@ -61,6 +61,7 @@
         - setup-hosts
         - setup
   vars:
+    instance_name: "{{ osa_instance_name | default('Nightly-Test') }}"
     login_username: "{{ os_username }}"
     login_password: "{{ os_password }}"
     login_tenant_name: "{{ os_tenant_name }}"
@@ -135,7 +136,7 @@
         - run-tempest
 
 
-- name: Destroy an OSA Server
+- name: Destroy an OSA test Server
   hosts: localhost
   connection: local
   gather_facts: false
@@ -155,10 +156,13 @@
         flavor_include: Performance
         key_name: "{{ os_keyname }}"
       with_items:
-        - Nightly-Test
+        - "{{ instance_name }}"
+      when: not save_instance | bool
       tags:
         - destroy-server
   vars:
+    save_instance: "{{ osa_save_instance | default('false') }}"
+    instance_name: "{{ osa_instance_name | default('Nightly-Test') }}"
     login_username: "{{ os_username }}"
     login_password: "{{ os_password }}"
     login_tenant_name: "{{ os_tenant_name }}"
