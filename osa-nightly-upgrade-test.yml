@@ -104,7 +104,6 @@
         chdir: /opt/openstack-ansible
       environment:
         RUN_TEMPEST: no
-        RUN_PLAYBOOKS: no
         DEPLOY_TEMPEST: no
         DEPLOY_LOGGING: no
         DEPLOY_RPC_SUPPORT: no
