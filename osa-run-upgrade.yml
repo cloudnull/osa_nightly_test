@@ -35,6 +35,13 @@
         backup: "true"
       tags:
         - set-galera-ignore-cluster-state
+    - name: Force the upgrade to use galera_monitoring_user=haproxy
+      lineinfile:
+        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
+        line: "galera_monitoring_user: haproxy"
+        backup: "true"
+      tags:
+        - set-galera-monitoring-user
     - name: Run the initial build
       command: scripts/gate-check-commit.sh
       args:
