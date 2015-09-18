@@ -1,0 +1,91 @@
+- name: Run upgrade
+  hosts: os_nodes
+  gather_facts: false
+  user: root
+  tasks:
+    - name: Install base packages
+      apt:
+        name: "{{ item }}"
+        update_cache: "yes"
+        cache_valid_time: "3600"
+      with_items:
+        - git
+      tags:
+        - install-packages
+    - name: Clone OSA into place
+      git:
+        repo: "{{ osa_repo }}"
+        dest: /opt/openstack-ansible
+        update: yes
+        force: yes
+        version: "{{ osa_branch_source }}"
+      failed_when: false
+      tags:
+        - clone-repo
+    - name: Drop new infra-template for container affinity
+      template:
+        src: "templates/infra_hosts.yml"
+        dest: "/opt/openstack-ansible/etc/rpc_deploy/conf.d/infra_hosts.yml"
+      tags:
+        - infra-template
+    - name: Force the upgrade to use galera_ignore_cluster_state=true
+      lineinfile:
+        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
+        line: "galera_ignore_cluster_state: true"
+        backup: "true"
+      tags:
+        - set-galera-ignore-cluster-state
+    - name: Run the initial build
+      command: scripts/gate-check-commit.sh
+      args:
+        chdir: /opt/openstack-ansible
+      environment:
+        RUN_TEMPEST: no
+        DEPLOY_TEMPEST: no
+        DEPLOY_LOGGING: no
+        DEPLOY_RPC_SUPPORT: no
+      tags:
+        - run-install
+    - name: Clone OSA into place
+      git:
+        repo: "{{ osa_repo }}"
+        dest: /opt/openstack-ansible
+        update: yes
+        force: yes
+        version: "{{ osa_branch_target }}"
+      failed_when: false
+      tags:
+        - clone-repo
+    - name: checkout refspec
+      shell: >
+        git fetch {{ osa_repo }} {{ git_refspec }} && git checkout FETCH_HEAD
+      args:
+        chdir: /opt/openstack-ansible
+      when: git_refspec != ''
+      tags:
+        - install-tempest
+    - name: Run the upgrade
+      shell: >
+        echo YES | scripts/run-upgrade.sh
+      args:
+        chdir: /opt/openstack-ansible
+      tags:
+        - run-upgrade
+    - name: Install tempest
+      command: openstack-ansible os-tempest-install.yml
+      args:
+        chdir: /opt/openstack-ansible/playbooks
+      tags:
+        - install-tempest
+    - name: Run tempest
+      command: scripts/run-tempest.sh
+      args:
+        chdir: /opt/openstack-ansible
+      register: run_tempest
+      until: run_tempest|success
+      retries: 2
+      delay: 10
+      tags:
+        - run-tempest
+  vars:
+    git_refspec: "{{ osa_refspec | default('') }}"

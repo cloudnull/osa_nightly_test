@@ -1,0 +1,31 @@
+- name: Destroy an OSA test Server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  user: root
+  tasks:
+    - name: destroy an instance
+      nova_compute:
+        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        state: absent
+        login_username: "{{ login_username }}"
+        login_password: "{{ login_password }}"
+        login_tenant_name: "{{ login_tenant_name }}"
+        auth_url: "{{ os_auth_url }}"
+        region_name: "{{ region_name | capitalize }}"
+        image_name: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
+        flavor_ram: 8192
+        flavor_include: Performance
+        key_name: "{{ os_keyname }}"
+      with_items:
+        - "{{ instance_name }}"
+      when: not save_instance | bool
+      tags:
+        - destroy-server
+  vars:
+    save_instance: "{{ osa_save_instance | default('false') }}"
+    instance_name: "{{ osa_instance_name | default('Nightly-Test') }}"
+    login_username: "{{ os_username }}"
+    login_password: "{{ os_password }}"
+    login_tenant_name: "{{ os_tenant_name }}"
+    region_name: "{{ os_region_name }}"
