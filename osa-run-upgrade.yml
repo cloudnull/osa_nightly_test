@@ -49,6 +49,13 @@
         backup: "true"
       tags:
         - set-galera-cluster-name
+    - name: Force tempest address to tempest_public_subnet_cidr=172.29.248.0/22
+      lineinfile:
+        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
+        line: "tempest_public_subnet_cidr: 172.29.248.0/22"
+        backup: "true"
+      tags:
+        - set-galera-cluster-name
     - name: Run the initial build
       command: scripts/gate-check-commit.sh
       args:
