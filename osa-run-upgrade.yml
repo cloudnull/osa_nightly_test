@@ -55,7 +55,7 @@
         line: "tempest_public_subnet_cidr: 172.29.248.0/22"
         backup: "true"
       tags:
-        - set-galera-cluster-name
+        - set-tempest-public-subnet
     - name: Run the initial build
       command: scripts/gate-check-commit.sh
       args:
