@@ -56,6 +56,13 @@
         backup: "true"
       tags:
         - set-tempest-public-subnet
+    - name: Enable trusty backports
+      lineinfile:
+        dest: "/etc/apt/sources.list"
+        line: "deb http://mirror.rackspace.com/ubuntu trusty-backports main restricted universe multiverse"
+        backup: "true"
+      tags:
+        - enable-backports
     - name: Run the initial build
       command: scripts/gate-check-commit.sh
       args:
@@ -67,6 +74,13 @@
         DEPLOY_RPC_SUPPORT: no
       tags:
         - run-install
+    - name: Remove containers with no purpose
+      shell: |
+        for container in $(lxc-ls | grep -e kibana -e elastic -e logstash); do
+          lxc-destroy -fn $container
+        done
+      tags:
+        - container-remove
     - name: Clone OSA into place
       git:
         repo: "{{ osa_repo }}"
@@ -98,15 +112,6 @@
         chdir: /opt/openstack-ansible/playbooks
       tags:
         - install-tempest
-    - name: Run tempest
-      command: scripts/run-tempest.sh
-      args:
-        chdir: /opt/openstack-ansible
-      register: run_tempest
-      until: run_tempest|success
-      retries: 2
-      delay: 10
-      tags:
-        - run-tempest
   vars:
     git_refspec: "{{ osa_refspec | default('') }}"
+

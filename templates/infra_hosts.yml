@@ -2,6 +2,6 @@
 infra_hosts:
   aio1:
     affinity:
-      galera_container: 3
-      rabbit_mq_container: 3
+      galera_container: 2
+      rabbit_mq_container: 1
     ip: 172.29.236.100

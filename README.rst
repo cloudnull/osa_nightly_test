@@ -35,3 +35,17 @@ Example command using the "special" options
                      -e "osa_instance_name=${INSTANCE_NAME}" \
                      -e @os-creds.yml \
                      osa-nightly-upgrade-test.yml
+
+
+Automated Upgrade testing
+-------------------------
+
+1. Clone repo to /opt
+
+2. Place the scrpits in the following locations:
+      * scripts/osa-upgrade-testing.cron.sh > /etc/cron.daily/osa-upgrade-testing
+      * scripts/run-tagged-tests.sh > /root/run-tagged-tests.sh
+
+3. Place the os-creds.yml file in /root and fill in your details.
+
+4. Test by running the /root/run-tagged-tests.sh script
