@@ -6,7 +6,7 @@
   tasks:
     - name: destroy an instance
       nova_compute:
-        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        name: "OSATestNode-{{ region_name }}-{{ item }}"
         state: absent
         login_username: "{{ login_username }}"
         login_password: "{{ login_password }}"
