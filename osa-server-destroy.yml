@@ -20,6 +20,8 @@
       with_items:
         - "{{ instance_name }}"
       when: not save_instance | bool
+      failed_when: false
+      no_log: True
       tags:
         - destroy-server
   vars:
