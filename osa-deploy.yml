@@ -1,0 +1,33 @@
+- name: Run deployment
+  hosts: os_nodes
+  gather_facts: false
+  user: root
+  tasks:
+    - name: Install base packages
+      apt:
+        name: "{{ item }}"
+        update_cache: "yes"
+        cache_valid_time: "3600"
+      with_items:
+        - git
+      tags:
+        - install-packages
+    - name: Clone OSA into place
+      git:
+        repo: "{{ osa_repo }}"
+        dest: /opt/openstack-ansible
+        update: yes
+        force: yes
+        version: "{{ osa_branch_source }}"
+      failed_when: false
+      tags:
+        - clone-repo
+    - name: Run the initial build
+      command: scripts/gate-check-commit.sh
+      args:
+        chdir: /opt/openstack-ansible
+      environment:
+        RUN_TEMPEST: no
+        DEPLOY_TEMPEST: no
+      tags:
+        - run-install

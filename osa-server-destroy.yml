@@ -6,7 +6,7 @@
   tasks:
     - name: destroy an instance
       nova_compute:
-        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        name: "OS-TestNode.{{ login_username }}.{{ region_name }}.{{ item }}"
         state: absent
         login_username: "{{ login_username }}"
         login_password: "{{ login_password }}"
@@ -18,7 +18,7 @@
         flavor_include: Performance
         key_name: "{{ os_keyname }}"
       with_items:
-        - "{{ instance_name }}"
+        - "{{ instance_names }}"
       when: not save_instance | bool
       failed_when: false
       no_log: True
@@ -26,7 +26,8 @@
         - destroy-server
   vars:
     save_instance: "{{ osa_save_instance | default('false') }}"
-    instance_name: "{{ osa_instance_name | default('Nightly-Test') }}"
+    instance_names:
+      - "{{ osa_instance_name }}"
     login_username: "{{ os_username }}"
     login_password: "{{ os_password }}"
     login_tenant_name: "{{ os_tenant_name }}"

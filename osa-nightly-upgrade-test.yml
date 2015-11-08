@@ -1,8 +1,0 @@
-- include: osa-server-destroy.yml
-  vars:
-    save_instance: false
-    osa_save_instance: false
-
-- include: osa-server-create.yml
-- include: osa-run-upgrade.yml
-- include: osa-server-destroy.yml

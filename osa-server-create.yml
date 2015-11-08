@@ -1,4 +1,4 @@
-- name: Create an OSA Server
+- name: Create an OS Server
   hosts: localhost
   connection: local
   gather_facts: false
@@ -6,7 +6,7 @@
   tasks:
     - name: Launch a test instance
       nova_compute:
-        name: "{{ login_username }}-{{ region_name }}-{{ item }}"
+        name: "OS-TestNode.{{ login_username }}.{{ region_name }}.{{ item }}"
         state: present
         login_username: "{{ login_username }}"
         login_password: "{{ login_password }}"
@@ -14,11 +14,11 @@
         auth_url: "{{ os_auth_url }}"
         region_name: "{{ region_name | capitalize }}"
         image_name: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
-        flavor_ram: 8192
-        flavor_include: Performance
+        flavor_ram: "{{ flavor_ram }}"
+        flavor_include: "{{ flavor_include }}"
         key_name: "{{ os_keyname }}"
       with_items:
-        - "{{ instance_name }}"
+        - "{{ instance_names }}"
       register: nova_hosts
       no_log: True
       tags:
@@ -26,12 +26,36 @@
         - setup
     - name: Load inventory
       add_host:
-        hostname: "{{ item.info.name.split('-')[-1] }}"
+        hostname: "{{ item.info.name }}"
         ansible_ssh_host: "{{ item.info.accessIPv4 }}"
-        ansible_ssh_port: "22"
         groups: os_nodes
       with_items: nova_hosts.results
       no_log: True
+      tags:
+        - setup-hosts
+        - setup
+    - name: Write os_nodes inventory
+      copy:
+        dest: "/tmp/os_inventory.{{ login_username }}.{{ region_name }}"
+        content: |
+          [all]
+          {% for host in groups['all'] %}
+          {{ host }}
+          {% endfor %}
+          {% for group in groups %}
+          {% if group != 'all' %}
+          [{{ group }}]
+          {% for host in groups[group] %}
+          {{ host }}
+          {% endfor %}
+          {% for host in groups[group] %}
+          [{{ host }}:vars]
+          {% for key, value in hostvars[host].items() %}
+          {{ key }}={{ value }}
+          {% endfor %}
+          {% endfor %}
+          {% endif %}
+          {% endfor %}
       tags:
         - setup-hosts
         - setup
@@ -40,15 +64,18 @@
         port: 22
         host: "{{ item.info.accessIPv4 }}"
         search_regex: OpenSSH
-        delay: 10
+        delay: 3
       with_items: nova_hosts.results
       no_log: True
       tags:
         - setup-hosts
         - setup
   vars:
-    instance_name: "{{ osa_instance_name | default('Nightly-Test') }}"
+    instance_names:
+      - "{{ osa_instance_name | default('Nightly-Test') }}"
     login_username: "{{ os_username }}"
     login_password: "{{ os_password }}"
     login_tenant_name: "{{ os_tenant_name }}"
     region_name: "{{ os_region_name }}"
+    flavor_ram: 8192
+    flavor_include: Performance

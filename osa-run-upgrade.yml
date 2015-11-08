@@ -3,77 +3,6 @@
   gather_facts: false
   user: root
   tasks:
-    - name: Install base packages
-      apt:
-        name: "{{ item }}"
-        update_cache: "yes"
-        cache_valid_time: "3600"
-      with_items:
-        - git
-      tags:
-        - install-packages
-    - name: Clone OSA into place
-      git:
-        repo: "{{ osa_repo }}"
-        dest: /opt/openstack-ansible
-        update: yes
-        force: yes
-        version: "{{ osa_branch_source }}"
-      failed_when: false
-      tags:
-        - clone-repo
-    - name: Drop new infra-template for container affinity
-      template:
-        src: "templates/infra_hosts.yml"
-        dest: "/opt/openstack-ansible/etc/rpc_deploy/conf.d/infra_hosts.yml"
-      tags:
-        - infra-template
-    - name: Force the upgrade to use galera_ignore_cluster_state=true
-      lineinfile:
-        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
-        line: "galera_ignore_cluster_state: true"
-        backup: "true"
-      tags:
-        - set-galera-ignore-cluster-state
-    - name: Force the upgrade to use galera_monitoring_user=haproxy
-      lineinfile:
-        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
-        line: "galera_monitoring_user: haproxy"
-        backup: "true"
-      tags:
-        - set-galera-monitoring-user
-    - name: Force the galera cluster to galera_cluster_name=rpc_galera_cluster
-      lineinfile:
-        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
-        line: "galera_cluster_name: rpc_galera_cluster"
-        backup: "true"
-      tags:
-        - set-galera-cluster-name
-    - name: Force tempest address to tempest_public_subnet_cidr=172.29.248.0/22
-      lineinfile:
-        dest: "/opt/openstack-ansible/etc/rpc_deploy/user_variables.yml"
-        line: "tempest_public_subnet_cidr: 172.29.248.0/22"
-        backup: "true"
-      tags:
-        - set-tempest-public-subnet
-    - name: Enable trusty backports
-      lineinfile:
-        dest: "/etc/apt/sources.list"
-        line: "deb http://mirror.rackspace.com/ubuntu trusty-backports main restricted universe multiverse"
-        backup: "true"
-      tags:
-        - enable-backports
-    - name: Run the initial build
-      command: scripts/gate-check-commit.sh
-      args:
-        chdir: /opt/openstack-ansible
-      environment:
-        RUN_TEMPEST: no
-        DEPLOY_TEMPEST: no
-        DEPLOY_LOGGING: no
-        DEPLOY_RPC_SUPPORT: no
-      tags:
-        - run-install
     - name: Remove containers with no purpose
       shell: |
         for container in $(lxc-ls | grep -e kibana -e elastic -e logstash); do
@@ -98,7 +27,7 @@
         chdir: /opt/openstack-ansible
       when: git_refspec != ''
       tags:
-        - install-tempest
+        - ref-spec
     - name: Run the upgrade
       shell: >
         echo YES | scripts/run-upgrade.sh
