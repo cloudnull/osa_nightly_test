@@ -18,10 +18,15 @@
         dest: /opt/rpc-openstack
         update: yes
         force: yes
+        recursive: yes
         version: "{{ rpco_branch_source }}"
       failed_when: false
       tags:
         - clone-repo
+    - name: Run bootstrap-aio
+      command: scripts/bootstrap-aio.sh
+      args:
+        chdir: /opt/rpc-openstack/openstack-ansible
     - name: Run the initial build
       command: scripts/deploy.sh
       args:
