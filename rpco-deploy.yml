@@ -1,0 +1,35 @@
+- name: Run deployment
+  hosts: os_nodes
+  gather_facts: false
+  user: root
+  tasks:
+    - name: Install base packages
+      apt:
+        name: "{{ item }}"
+        update_cache: "yes"
+        cache_valid_time: "3600"
+      with_items:
+        - git
+      tags:
+        - install-packages
+    - name: Clone OSA into place
+      git:
+        repo: "{{ rpco_repo }}"
+        dest: /opt/rpc-openstack
+        update: yes
+        force: yes
+        version: "{{ rpco_branch_source }}"
+      failed_when: false
+      tags:
+        - clone-repo
+    - name: Run the initial build
+      command: scripts/deploy.sh
+      args:
+        chdir: /opt/rpc-openstack
+      environment:
+        RUN_TEMPEST: no
+        DEPLOY_TEMPEST: no
+        DEPLOY_AIO: yes
+        DEPLOY_ELK: no
+      tags:
+        - run-install
